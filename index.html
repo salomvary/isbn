@@ -1,0 +1,158 @@
+<!doctype html>
+<title>Random ISBN Generator, Validator and Converter</title>
+<meta charset=utf-8>
+<style>
+	html,
+	body {
+		height: 100%;
+		margin: 0;
+		font: x-large sans-serif;
+	}
+
+	input {
+		padding: .3em .5em;
+		font: 2rem monospace;
+		text-align: center;
+	}
+
+	input:read-only {
+		border: none;
+	}
+
+	body {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+	}
+
+	p {
+		text-align: center;
+	}
+
+	small {
+		color: gray;
+	}
+</style>
+
+<p>
+	<label for=in>
+		Enter an ISBN:
+	</label>
+</p>
+<p>
+	<input autofocus id=in 
+		oninput=handleInput(event)
+		placeholder="000-000000000-0">
+</p>
+
+<p>
+	<input readonly id=out>
+</p>
+
+<p><small id=message>🎲 This is a random ISBN.</small></p>
+
+<script>
+	// Source: https://github.com/coolaj86/isbnjs
+	function calcCheckDigit(isbn) {
+		var c, n;
+		if (isbn.match(/^\d{9}[\dX]?$/)) {
+			c = 0;
+			for (n = 0; n < 9; n += 1) {
+				c += (10 - n) * isbn.charAt(n);
+			}
+			c = (11 - c % 11) % 11;
+			return c === 10 ? 'X' : String(c);
+
+		} else if (isbn.match(/(?:978|979)\d{9}[\dX]?/)) {
+			c = 0;
+			for (n = 0; n < 12; n += 2) {
+				c += Number(isbn.charAt(n)) + 3 * isbn.charAt(n + 1);
+			}
+			return String((10 - c % 10) % 10);
+		}
+
+		return null;
+	}
+
+	function compact(isbn) {
+		return isbn.replaceAll(/[ -]/g, '').trim();
+	}
+
+	function hyphenate(isbn) {
+		const compacted = compact(isbn);
+		if (compacted.length == 10) {
+			return compacted.substring(0, 9) + '-' + compacted.substring(9, 10);
+		} else if (compacted.length == 13) {
+			return compacted.substring(0, 3) + '-' + compacted.substring(3, 12) + '-' + compacted.substring(12);
+		} else {
+			return compacted;
+		}
+	}
+
+	function randomISBN() {
+		const prefix = '978';
+		const min = 100000000;
+		const max = 999999999;
+		const number = prefix + Math.round(Math.random() * (max - min) + min);
+		const checkDigit = calcCheckDigit(number);
+		return number + checkDigit;
+	}
+
+	function isValid(isbn) {
+		const compacted = compact(isbn);
+		const checkDigit = calcCheckDigit(compacted);
+		console.log(compacted, checkDigit);
+		return isbn.endsWith(checkDigit);
+	}
+
+	function convert(isbn) {
+		const compacted = compact(isbn);
+		const checkDigit = calcCheckDigit(compacted);
+
+		if (compacted.endsWith(checkDigit)) {
+			if (compacted.length == 10) {
+				const isbn13 = '978' + compacted.substring(0, 9);
+				return isbn13 + calcCheckDigit(isbn13);
+			} else if (compacted.length == 13 && compacted.startsWith('978')) {
+				const isbn10 = compacted.substring(3, 12);
+				return isbn10 + calcCheckDigit(isbn10);
+			}
+		}
+
+		return null;
+	}
+
+	function validateAndConvert() {
+		const isbn = input.value;
+
+		if (isValid(isbn)) {
+			const converted = convert(isbn);
+			if (converted) {
+				out.value = hyphenate(converted);
+			} else {
+				message.innerText = '⚠️ This ISBN 13 can not be converted to ISBN 10.'
+			}
+		} else {
+			message.innerText = '⚠️ This is not a valid ISBN.'
+		}
+	}
+
+	function handleInput(event) {
+		message.innerHTML = '&nbsp;';
+		out.value = '';
+
+		validateAndConvert();
+	}
+
+	const message = document.getElementById('message');
+	const input = document.getElementById('in');
+	const out = document.getElementById('out');
+
+
+	// Show random ISBN by default
+	const isbn = randomISBN();
+	input.value = hyphenate(isbn);
+	out.value = hyphenate(convert(isbn));
+	input.select();
+</script>
