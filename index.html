@@ -41,9 +41,7 @@
 	</label>
 </p>
 <p>
-	<input autofocus id=in 
-		oninput=handleInput(event)
-		placeholder="000-000000000-0">
+	<input autofocus id=in oninput=handleInput(event) placeholder="000-000000000-0">
 </p>
 
 <p>
@@ -130,6 +128,7 @@
 			const converted = convert(isbn);
 			if (converted) {
 				out.value = hyphenate(converted);
+				message.innerText = '✅ This is a valid ISBN.'
 			} else {
 				message.innerText = '⚠️ This ISBN 13 can not be converted to ISBN 10.'
 			}
