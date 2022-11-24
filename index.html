@@ -48,7 +48,11 @@
 	<input readonly id=out>
 </p>
 
-<p><small id=message>🎲 This is a random ISBN.</small></p>
+<p style="line-height: 1.3">
+	<small id=message>🎲 This is a random ISBN.</small>
+	<br>
+	<small id=hint>💡 Reload the page to get a new one.</small>
+</p>
 
 <script>
 	// Source: https://github.com/coolaj86/isbnjs
@@ -133,18 +137,28 @@
 				message.innerText = '⚠️ This ISBN 13 can not be converted to ISBN 10.'
 			}
 		} else {
-			message.innerText = '⚠️ This is not a valid ISBN.'
+			const compacted = compact(isbn);
+			if (compacted.length == 9 || compacted.length == 12) {
+				const checkDigit = calcCheckDigit(compacted);
+				if (checkDigit != null) {
+					hint.innerText = `💡 Append '${checkDigit}' check digit to make it valid.`
+				}
+			}
+
+			message.innerText = '⚠️ This is not a valid ISBN.';
 		}
 	}
 
 	function handleInput(event) {
 		message.innerHTML = '&nbsp;';
+		hint.innerHTML = '&nbsp;';
 		out.value = '';
 
 		validateAndConvert();
 	}
 
 	const message = document.getElementById('message');
+	const hint = document.getElementById('hint');
 	const input = document.getElementById('in');
 	const out = document.getElementById('out');
 
